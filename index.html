@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金銭管理システム (プロトタイプ)</title>
+    <title>金銭管理システム (改良版)</title>
     <style>
-        /* 簡易的なレイアウト調整 */
         body {
             font-family: sans-serif;
             margin: 20px;
             background-color: #f5f5f5;
+            color: #333;
         }
         .container {
             max-width: 600px;
@@ -26,37 +26,51 @@
         }
         .form-group {
             margin-bottom: 15px;
+            display: flex;
+            align-items: center;
         }
         label {
-            display: inline-block;
-            width: 80px;
+            width: 90px;
             font-weight: bold;
         }
         input[type="number"], input[type="text"], input[type="date"] {
-            padding: 6px;
-            width: 200px;
+            padding: 8px;
+            flex: 1;
             box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
         }
         button {
-            padding: 8px 16px;
+            padding: 10px 16px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: bold;
         }
         button:hover {
             background-color: #45a049;
-        }
-        .actions {
-            margin-top: 10px;
         }
         .download-btn {
             background-color: #008CBA;
         }
         .download-btn:hover {
             background-color: #007B9A;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
         }
         table {
             width: 100%;
@@ -65,7 +79,7 @@
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
         th {
@@ -74,28 +88,33 @@
         td.amount {
             text-align: right;
         }
+        td.center {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>支出登録</h2>
-    <div class="form-group">
-        <label for="amount">金額 (円):</label>
-        <input type="number" id="amount" placeholder="例: 1200">
-    </div>
-    <div class="form-group">
-        <label for="category">カテゴリ:</label>
-        <input type="text" id="category" placeholder="例: ランチ">
-    </div>
-    <div class="form-group">
-        <label for="date">日付:</label>
-        <input type="date" id="date">
-    </div>
-    <div class="actions">
-        <button onclick="registerExpense()">登録</button>
-        <button class="download-btn" onclick="downloadCSV()">CSVダウンロード</button>
-    </div>
+    <form id="expense-form" onsubmit="registerExpense(event)">
+        <div class="form-group">
+            <label for="amount">金額 (円):</label>
+            <input type="number" id="amount" min="1" placeholder="例: 1200" required>
+        </div>
+        <div class="form-group">
+            <label for="category">カテゴリ:</label>
+            <input type="text" id="category" placeholder="例: ランチ" required>
+        </div>
+        <div class="form-group">
+            <label for="date">日付:</label>
+            <input type="date" id="date" required>
+        </div>
+        <div class="actions">
+            <button type="submit">登録</button>
+            <button type="button" class="download-btn" onclick="downloadCSV()">CSVダウンロード</button>
+        </div>
+    </form>
 
     <h2>支出一覧</h2>
     <table>
@@ -104,10 +123,10 @@
                 <th>日付</th>
                 <th>カテゴリ</th>
                 <th style="text-align: right;">金額 (円)</th>
+                <th style="text-align: center; width: 60px;">操作</th>
             </tr>
         </thead>
-        <tbody id="expense-list">
-            </tbody>
+        <tbody id="expense-list"></tbody>
     </table>
 </div>
 
@@ -116,58 +135,70 @@
     window.onload = function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date').value = today;
-        
-        // 既存データの読み込みと表示
         loadData();
     };
 
-    // シーケンス図：登録ボタン押下時の処理
-    function registerExpense() {
-        const amountInput = document.getElementById('amount').value.trim();
+    // データの取得を共通化
+    function getExpenses() {
+        return JSON.parse(localStorage.getItem('expenses')) || [];
+    }
+
+    // データの保存を共通化
+    function saveExpenses(expenses) {
+        localStorage.setItem('expenses', JSON.stringify(expenses));
+    }
+
+    // 登録処理
+    function registerExpense(event) {
+        // formのデフォルトのページリロードを防ぐ
+        event.preventDefault();
+
+        const amountInput = document.getElementById('amount').value;
         const categoryInput = document.getElementById('category').value.trim();
         const dateInput = document.getElementById('date').value;
 
-        // 入力チェック（金額が空でないか）
-        if (!amountInput) {
-            alert("金額を入力してください。");
-            return;
-        }
-        if (!categoryInput) {
-            alert("カテゴリを入力してください。");
-            return;
-        }
-
         const amount = parseInt(amountInput, 10);
-        if (isNaN(amount)) {
-            alert("金額には数値を入力してください。");
+        if (isNaN(amount) || amount <= 0) {
+            alert("金額には1以上の数値を入力してください。");
             return;
         }
 
-        // データ構造の定義
         const newExpense = {
+            id: Date.now(), // 削除時に特定するためのユニークキー
             date: dateInput,
             category: categoryInput,
             amount: amount
         };
 
-        // LocalStorageから既存データを取得して追加
-        const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+        const expenses = getExpenses();
         expenses.push(newExpense);
-        localStorage.setItem('expenses', JSON.stringify(expenses));
+        saveExpenses(expenses);
 
-        // 一覧の再描画とフォームのクリア
         loadData();
+        
+        // フォームをリセット（日付は残す）
         document.getElementById('amount').value = '';
         document.getElementById('category').value = '';
-        alert("支出を登録しました。");
+    }
+
+    // 削除処理
+    function deleteExpense(id) {
+        if (!confirm("このレコードを削除してもよろしいですか？")) return;
+
+        const expenses = getExpenses();
+        // 指定されたid以外のデータを残す
+        const filteredExpenses = expenses.filter(item => item.id !== id);
+        saveExpenses(filteredExpenses);
+
+        loadData();
     }
 
     // データの読み込みとテーブル描画
     function loadData() {
         const tbody = document.getElementById('expense-list');
-        tbody.innerHTML = ''; // 一旦クリア
+        tbody.innerHTML = '';
 
-        const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+        const expenses = getExpenses();
 
         expenses.forEach(item => {
             const row = document.createElement('tr');
@@ -180,46 +211,4 @@
             
             const tdAmount = document.createElement('td');
             tdAmount.className = 'amount';
-            tdAmount.textContent = item.amount.toLocaleString(); // 3桁区切り
-
-            row.appendChild(tdDate);
-            row.appendChild(tdCategory);
-            row.appendChild(tdAmount);
-            tbody.appendChild(row);
-        });
-    }
-
-    // 完了条件：CSVファイルとして保存（ダウンロード）する機能
-    function downloadCSV() {
-        const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-        if (expenses.length === 0) {
-            alert("ダウンロードするデータがありません。");
-            return;
-        }
-
-        // CSVのヘッダー
-        let csvContent = "日付,カテゴリ,金額\r\n";
-
-        // データをCSV形式の文字列に変換
-        expenses.forEach(item => {
-            csvContent += `${item.date},${item.category},${item.amount}\r\n`;
-        });
-
-        // Shift_JISやUTF-8のBOM付きでExcel対策
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-        const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
-        
-        // ダウンロード用のリンクを動的に作成してクリック
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "kakeibo.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-</script>
-
-</body>
-</html>
+            tdAmount.textContent = item.

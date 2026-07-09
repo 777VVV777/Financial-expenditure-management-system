@@ -4,80 +4,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>金銭管理システム (プロトタイプ)</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* 全体のベーススタイル */
         body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
             margin: 0;
-            padding: 40px 20px;
-            background-color: #f8fafc;
-            color: #334155;
+            padding: 60px 20px;
+            background-color: #f3f4f6; /* よりモダンなグレーに */
+            color: #1f2937;
             -webkit-font-smoothing: antialiased;
         }
 
         /* メインコンテナ */
         .container {
-            max-width: 640px;
+            max-width: 680px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 28px; /* 各セクションの間隔 */
+        }
+
+        /* カードデザイン（共通） */
+        .card {
             background: #ffffff;
             padding: 32px;
             border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(243, 244, 246, 0.8);
         }
 
         /* 見出し（H2） */
         h2 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 700;
+            letter-spacing: 0.05em;
             margin-top: 0;
-            margin-bottom: 20px;
-            padding-bottom: 8px;
-            color: #1e293b;
-            border-bottom: 2px solid #2ecc71;
+            margin-bottom: 24px;
+            color: #111827;
             display: flex;
             align-items: center;
+            gap: 8px; /* アイコンとの隙間 */
         }
 
-        h2:not(:first-of-type) {
-            margin-top: 40px;
+        /* アイコンのスタイル調整 */
+        h2 i {
+            color: #10b981;
+            width: 20px;
+            height: 20px;
         }
 
         /* フォームレイアウト */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
         .form-group {
-            margin-bottom: 18px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
         label {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #64748b;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         /* 入力フィールド */
         input[type="number"], input[type="text"], input[type="date"] {
-            padding: 10px 14px;
-            font-size: 1rem;
-            color: #334155;
-            background-color: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            color: #111827;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
             box-sizing: border-box;
             width: 100%;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         input:focus {
             outline: none;
-            border-color: #2ecc71;
-            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+            background-color: #ffffff;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
         }
 
         /* ボタンエリア */
         .actions {
-            margin-top: 24px;
+            margin-top: 12px;
             display: flex;
             gap: 12px;
         }
@@ -85,29 +105,30 @@
         /* 基本ボタン */
         button {
             flex: 1;
-            padding: 12px 20px;
+            padding: 14px 20px;
             font-size: 0.95rem;
             font-weight: 600;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            gap: 8px;
         }
 
         /* 登録ボタン */
         button:not(.download-btn) {
-            background-color: #2ecc71;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
 
         button:not(.download-btn):hover {
-            background-color: #27ae60;
+            opacity: 0.95;
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.15);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
         }
 
         button:not(.download-btn):active {
@@ -116,14 +137,15 @@
 
         /* CSVダウンロードボタン */
         .download-btn {
-            background-color: #f1f5f9;
-            color: #475569;
-            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
         }
 
         .download-btn:hover {
-            background-color: #e2e8f0;
-            color: #1e293b;
+            background-color: #f9fafb;
+            color: #111827;
+            border-color: #d1d5db;
             transform: translateY(-1px);
         }
 
@@ -132,88 +154,96 @@
         }
 
         /* テーブル（一覧） */
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
+        .table-wrapper {
+            overflow-x: auto; /* スマホ対策 */
         }
 
-        th, td {
-            padding: 12px 16px;
-            font-size: 0.925rem;
+        table {
+            width: 100%;
+            border-collapse: collapse;
             text-align: left;
         }
 
+        th, td {
+            padding: 16px;
+            font-size: 0.9rem;
+        }
+
         th {
-            background-color: #f8fafc;
-            color: #64748b;
+            background-color: #ffffff;
+            color: #6b7280;
             font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 2px solid #f3f4f6;
+            letter-spacing: 0.05em;
         }
 
         td {
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
-            background-color: #ffffff;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
         }
 
-        /* テーブルの最後の行は線を消す */
-        tr:last-child td {
-            border-bottom: none;
+        /* ホバー効果 */
+        tbody tr {
+            transition: background-color 0.15s ease;
         }
-
-        /* ストライプ効果 & ホバー */
-        tbody tr:nth-child(even) td {
-            background-color: #f8fafc;
-        }
-
+        
         tbody tr:hover td {
-            background-color: #f1f5f9;
+            background-color: #f9fafb;
+        }
+
+        /* 最後の行のボーダーを消す */
+        tbody tr:last-child td {
+            border-bottom: none;
         }
 
         td.amount {
             text-align: right;
-            font-variant-numeric: tabular-nums; /* 数字の幅を揃えて見やすく */
-            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: #111827;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>支出登録</h2>
-    <div class="form-group">
-        <label for="amount">金額 (円)</label>
-        <input type="number" id="amount" placeholder="例: 1200">
-    </div>
-    <div class="form-group">
-        <label for="category">カテゴリ</label>
-        <input type="text" id="category" placeholder="例: ランチ">
-    </div>
-    <div class="form-group">
-        <label for="date">日付</label>
-        <input type="date" id="date">
-    </div>
-    <div class="actions">
-        <button onclick="registerExpense()">登録</button>
-        <button class="download-btn" onclick="downloadCSV()">CSVダウンロード</button>
+    <div class="card">
+        <h2><i data-lucide="plus-circle"></i>支出登録</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="amount">金額 (円)</label>
+                <input type="number" id="amount" placeholder="例: 1200">
+            </div>
+            <div class="form-group">
+                <label for="category">カテゴリ</label>
+                <input type="text" id="category" placeholder="例: ランチ">
+            </div>
+            <div class="form-group">
+                <label for="date">日付</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+        <div class="actions">
+            <button onclick="registerExpense()"><i data-lucide="check"></i>登録</button>
+            <button class="download-btn" onclick="downloadCSV()"><i data-lucide="download"></i>CSV</button>
+        </div>
     </div>
 
-    <h2>支出一覧</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>日付</th>
-                <th>カテゴリ</th>
-                <th style="text-align: right;">金額 (円)</th>
-            </tr>
-        </thead>
-        <tbody id="expense-list"></tbody>
-    </table>
+    <div class="card">
+        <h2><i data-lucide="list"></i>支出一覧</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日付</th>
+                        <th>カテゴリ</th>
+                        <th style="text-align: right;">金額 (円)</th>
+                    </tr>
+                </thead>
+                <tbody id="expense-list"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -224,21 +254,17 @@
         
         // 既存データの読み込みと表示
         loadData();
+        // アイコンの初期化
+        lucide.createIcons();
     };
 
-    // シーケンス図：登録ボタン押下時の処理
     function registerExpense() {
         const amountInput = document.getElementById('amount').value.trim();
         const categoryInput = document.getElementById('category').value.trim();
         const dateInput = document.getElementById('date').value;
 
-        // 入力チェック（金額が空でないか）
-        if (!amountInput) {
-            alert("金額を入力してください。");
-            return;
-        }
-        if (!categoryInput) {
-            alert("カテゴリを入力してください。");
+        if (!amountInput || !categoryInput) {
+            alert("金額とカテゴリを入力してください。");
             return;
         }
 
@@ -248,29 +274,25 @@
             return;
         }
 
-        // データ構造の定義
         const newExpense = {
             date: dateInput,
             category: categoryInput,
             amount: amount
         };
 
-        // LocalStorageから既存データを取得して追加
         const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
         expenses.push(newExpense);
         localStorage.setItem('expenses', JSON.stringify(expenses));
 
-        // 一覧の再描画とフォームのクリア
         loadData();
         document.getElementById('amount').value = '';
         document.getElementById('category').value = '';
         alert("支出を登録しました。");
     }
 
-    // データの読み込みとテーブル描画
     function loadData() {
         const tbody = document.getElementById('expense-list');
-        tbody.innerHTML = ''; // 一旦クリア
+        tbody.innerHTML = ''; 
 
         const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 
@@ -285,7 +307,7 @@
             
             const tdAmount = document.createElement('td');
             tdAmount.className = 'amount';
-            tdAmount.textContent = item.amount.toLocaleString(); // 3桁区切り
+            tdAmount.textContent = "¥" + item.amount.toLocaleString(); // ¥マークを追加
 
             row.appendChild(tdDate);
             row.appendChild(tdCategory);
@@ -294,7 +316,6 @@
         });
     }
 
-    // 完了条件：CSVファイルとして保存（ダウンロード）する機能
     function downloadCSV() {
         const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
         if (expenses.length === 0) {
@@ -302,19 +323,15 @@
             return;
         }
 
-        // CSVのヘッダー
         let csvContent = "日付,カテゴリ,金額\r\n";
 
-        // データをCSV形式の文字列に変換
         expenses.forEach(item => {
             csvContent += `${item.date},${item.category},${item.amount}\r\n`;
         });
 
-        // Shift_JISやUTF-8のBOM付きでExcel対策
         const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
         const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
         
-        // ダウンロード用のリンクを動的に作成してクリック
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
